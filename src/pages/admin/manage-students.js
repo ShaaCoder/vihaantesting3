@@ -410,56 +410,64 @@ export default function Students() {
 )}
 <br />
 
-      <div className="overflow-x-auto bg-white rounded-lg shadow-lg">
-        <table className="min-w-full table-auto">
-          <thead className="bg-gray-100 text-sm text-gray-500">
-            <tr>
-              <th className="px-6 py-3">Full Name</th>
-              <th className="px-6 py-3">Enrollment No</th>
-              <th className="px-6 py-3">Email</th>
-              <th className="px-6 py-3">Balance</th>
-              <th className="px-6 py-3">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredStudents.map((student) => (
-              <motion.tr
-                key={student._id}
-                whileHover={{ scale: 1.03 }}
-                transition={{ duration: 0.2 }}
-                className="border-b hover:bg-gray-50"
-              >
-                <td className="px-6 py-4 text-sm">{student.fullname}</td>
-                <td className="px-6 py-4 text-sm">
-                  {student.enrollmentNumber}
-                </td>
-                <td className="px-6 py-4 text-sm">{student.emailId}</td>
-                <td className="px-6 py-4 text-sm">{student.balance}</td>
-                <td className="px-6 py-4 text-sm flex space-x-2">
-                  <button
-                    onClick={() => handleView(student._id)}
-                    className="text-blue-500 hover:text-blue-700"
-                  >
-                    <EyeIcon className="h-5 w-5" />
-                  </button>
-                  <button
-                    onClick={() => handleEdit(student)}
-                    className="text-yellow-500 hover:text-yellow-700"
-                  >
-                    <PencilSquareIcon className="h-5 w-5" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(student._id)}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    <TrashIcon className="h-5 w-5" />
-                  </button>
-                </td>
-              </motion.tr>
+<div className="overflow-x-auto bg-white rounded-lg shadow-lg">
+  <table className="min-w-full table-auto">
+    <thead className="bg-gray-100 text-sm text-gray-500">
+      <tr>
+        <th className="px-4 py-3 text-left">Full Name</th>
+        <th className="px-4 py-3 text-left">Enrollment No</th>
+        <th className="px-4 py-3 text-left">Email</th>
+        <th className="px-4 py-3 text-left">Subjects</th>
+        <th className="px-4 py-3 text-left">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {filteredStudents.map((student) => (
+        <motion.tr
+          key={student._id}
+          whileHover={{ scale: 1.03 }}
+          transition={{ duration: 0.2 }}
+          className="border-b hover:bg-gray-50"
+        >
+          <td className="px-4 py-4 text-sm">{student.fullname}</td>
+          <td className="px-4 py-4 text-sm">{student.enrollmentNumber}</td>
+          <td className="px-4 py-4 text-sm">{student.emailId}</td>
+          <td className="px-4 py-4 text-sm">
+            {/* Display subjects as a comma-separated list */}
+            {student.courses.map((course, index) => (
+              <span key={index}>
+                {course.subject}
+                {index < student.courses.length - 1 && ", "}
+              </span>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </td>
+          <td className="px-4 py-4 text-sm flex space-x-2">
+            <button
+              onClick={() => handleView(student._id)}
+              className="text-blue-500 hover:text-blue-700 transition-colors duration-200"
+            >
+              <EyeIcon className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => handleEdit(student)}
+              className="text-yellow-500 hover:text-yellow-700 transition-colors duration-200"
+            >
+              <PencilSquareIcon className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => handleDelete(student._id)}
+              className="text-red-500 hover:text-red-700 transition-colors duration-200"
+            >
+              <TrashIcon className="h-5 w-5" />
+            </button>
+          </td>
+        </motion.tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+
+
     </AdminLayout>
   );
 }
