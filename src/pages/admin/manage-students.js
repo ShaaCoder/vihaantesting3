@@ -1,13 +1,19 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { motion } from "framer-motion";
-import { PencilSquareIcon, TrashIcon, EyeIcon } from '@heroicons/react/24/solid'; // Corrected import for Heroicons v2
+import {
+  PencilSquareIcon,
+  TrashIcon,
+  EyeIcon,
+} from "@heroicons/react/24/solid"; // Corrected import for Heroicons v2
 import AdminLayout from "@/components/AdminLayout";
 
 export default function Students() {
   const [students, setStudents] = useState([]);
   const [filteredStudents, setFilteredStudents] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStream, setSelectedStream] = useState(""); // Default is no stream selected
+
   const [formData, setFormData] = useState({
     fullname: "",
     class: "",
@@ -17,39 +23,40 @@ export default function Students() {
     emailId: "",
     balance: "",
     address: "",
+    stream: "",
     courses: [],
   });
   const [editingStudent, setEditingStudent] = useState(null);
   const [showForm, setShowForm] = useState(false); // Controls form visibility
   const [dropdownOpen, setDropdownOpen] = useState(null); // Track which dropdown is open
   const router = useRouter();
-  
+
   // Handle course changes
   const handleCourseChange = (index, e) => {
     const { name, value } = e.target;
     const updatedCourses = [...formData.courses];
     updatedCourses[index] = {
-        ...updatedCourses[index],
-        [name]: value,
+      ...updatedCourses[index],
+      [name]: value,
     };
     setFormData((prevState) => ({
-        ...prevState,
-        courses: updatedCourses,
+      ...prevState,
+      courses: updatedCourses,
     }));
   };
 
   const handleAddCourse = () => {
     setFormData((prevState) => ({
-        ...prevState,
-        courses: [...prevState.courses, { courseCode: "", subject: "" }],
+      ...prevState,
+      courses: [...prevState.courses, { courseCode: "", subject: "" }],
     }));
   };
 
   const handleRemoveCourse = (index) => {
     const updatedCourses = formData.courses.filter((_, i) => i !== index);
     setFormData((prevState) => ({
-        ...prevState,
-        courses: updatedCourses,
+      ...prevState,
+      courses: updatedCourses,
     }));
   };
 
@@ -58,10 +65,18 @@ export default function Students() {
     fetch("/api/students")
       .then((response) => response.json())
       .then((data) => {
-        setStudents(data);
-        setFilteredStudents(data); // Initially, all students are displayed
+        let filteredData = data;
+  
+        // If a stream is selected, filter students by stream
+        if (selectedStream) {
+          filteredData = data.filter((student) => student.stream === selectedStream);
+        }
+  
+        setStudents(data); // Set all students
+        setFilteredStudents(filteredData); // Set filtered students based on stream selection
       });
-  }, []);
+  }, [selectedStream]); // Dependency on selectedStream to refetch and filter data
+  
 
   // Handle search
   const handleSearch = (e) => {
@@ -101,6 +116,7 @@ export default function Students() {
       emailId: "",
       balance: "",
       address: "",
+      stream:"",
       courses: [],
     }); // Clear form data for a new student
     setEditingStudent(null); // Reset editing state
@@ -109,11 +125,16 @@ export default function Students() {
   // Submit form data (POST/PUT)
   const handleSubmit = (e) => {
     e.preventDefault();
-    const method = editingStudent ? "PUT" : "POST"; // Use PUT if editing, POST if adding
-    const url = editingStudent
-      ? `/api/students/${editingStudent._id}`
-      : "/api/students";
-
+  
+    // Validation logic if necessary
+    if (!formData.stream) {
+      alert("Please select a stream.");
+      return;
+    }
+  
+    const method = editingStudent ? "PUT" : "POST"; 
+    const url = editingStudent ? `/api/students/${editingStudent._id}` : "/api/students";
+  
     fetch(url, {
       method,
       headers: {
@@ -144,19 +165,21 @@ export default function Students() {
         console.error("Error saving student:", error);
       });
   };
+  
 
   // Edit student
   const handleEdit = (student) => {
     setFormData({
-        fullname: student.fullname,
-        class: student.class,
-        mobileNumber: student.mobileNumber,
-        enrollmentNumber: student.enrollmentNumber,
-        referenceNumber: student.referenceNumber,
-        emailId: student.emailId,
-        balance: student.balance,
-        address: student.address,
-        courses: student.courses || [],
+      fullname: student.fullname,
+      class: student.class,
+      mobileNumber: student.mobileNumber,
+      enrollmentNumber: student.enrollmentNumber,
+      referenceNumber: student.referenceNumber,
+      emailId: student.emailId,
+      balance: student.balance,
+      address: student.address,
+      stream:student.stream,
+      courses: student.courses || [],
     });
     setEditingStudent(student);
     setShowForm(true);
@@ -183,7 +206,7 @@ export default function Students() {
   // View student details
   const handleView = (id) => {
     router.push(`/admin/students/${id}`);
-};
+  };
 
   // Toggle dropdown visibility for actions
   const toggleDropdown = (id) => {
@@ -193,169 +216,314 @@ export default function Students() {
   // Reset form
   const resetForm = () => {
     setFormData({
-        fullname: "",
-        class: "",
-        mobileNumber: "",
-        enrollmentNumber: "",
-        referenceNumber: "",
-        emailId: "",
-        balance: "",
-        address: "",
-        courses: [],
+      fullname: "",
+      class: "",
+      mobileNumber: "",
+      enrollmentNumber: "",
+      referenceNumber: "",
+      emailId: "",
+      balance: "",
+      address: "",
+      stream:"",
+      courses: [],
     });
     setEditingStudent(null);
     setShowForm(false);
-};
+  };
 
   return (
     <AdminLayout>
-      <h1 className="text-3xl font-semibold text-blue-600 mb-6">Manage Students</h1>
+      <h1 className="text-3xl font-semibold text-blue-600 mb-6">
+        Manage Students
+      </h1>
 
-      <div className="flex flex-wrap items-center justify-between mb-6">
-        <button
-          onClick={handleAddStudentClick}
-          className="bg-green-500 text-white px-6 py-2 rounded-lg shadow-lg hover:bg-green-600 transition duration-200 transform hover:scale-105"
-        >
-          Add Student
-        </button>
+      <div className="flex flex-wrap items-center justify-between mb-6 space-y-4 sm:space-y-0 sm:flex-row">
+  {/* Search Input */}
+  <div className="w-full sm:w-1/3">
+    <input
+      type="text"
+      value={searchQuery}
+      onChange={handleSearch}
+      placeholder="Search by Full Name or Enrollment Number"
+      className="border-2 border-gray-300 px-4 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+    />
+  </div>
+
+  {/* Stream Filter Dropdown */}
+  <div className="w-full sm:w-1/3">
+    <select
+      value={selectedStream}
+      onChange={(e) => setSelectedStream(e.target.value)}
+      className="border-2 border-gray-300 px-4 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+    >
+      <option value="">Select Stream</option>
+      <option value="Stream-1">Stream-1</option>
+      <option value="Stream-2">Stream-2</option>
+    </select>
+  </div>
+
+  {/* Add Student Button */}
+  <div className="w-full sm:w-auto">
+    <button
+      onClick={handleAddStudentClick}
+      className="bg-green-500 text-white px-6 py-2 rounded-lg shadow-lg w-full sm:w-auto hover:bg-green-600 transition duration-200 transform hover:scale-105"
+    >
+      Add Student
+    </button>
+  </div>
+</div>
+
+
+
+{showForm && (
+  <motion.form
+    onSubmit={handleSubmit}
+    className="bg-white text-black p-6 rounded-lg shadow-md"
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    transition={{ duration: 0.8 }}
+  >
+    {/* Form Fields */}
+    <div className="space-y-6">
+      {/* Full Name */}
+      <div className="flex flex-col">
+        <label className="text-sm font-medium mb-2">Full Name</label>
         <input
           type="text"
-          value={searchQuery}
-          onChange={handleSearch}
-          placeholder="Search by Full Name or Enrollment Number"
-          className="border-2 border-gray-300 px-4 py-2 rounded-lg w-full max-w-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 transform hover:scale-105"
+          name="fullname"
+          value={formData.fullname}
+          onChange={handleChange}
+          className="p-3 border border-gray-300 rounded-md"
+          required
         />
       </div>
 
-      {showForm && (
-        <motion.form
-          onSubmit={handleSubmit}
-          className="text-black mb-6 bg-white p-6 rounded-lg shadow-lg"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
+      {/* Class */}
+      <div className="flex flex-col">
+        <label className="text-sm font-medium mb-2">Class</label>
+        <input
+          type="text"
+          name="class"
+          value={formData.class}
+          onChange={handleChange}
+          className="p-3 border border-gray-300 rounded-md"
+          required
+        />
+      </div>
+
+      {/* Mobile Number */}
+      <div className="flex flex-col">
+        <label className="text-sm font-medium mb-2">Mobile Number</label>
+        <input
+          type="text"
+          name="mobileNumber"
+          value={formData.mobileNumber}
+          onChange={handleChange}
+          className="p-3 border border-gray-300 rounded-md"
+          required
+        />
+      </div>
+
+      {/* Enrollment Number */}
+      <div className="flex flex-col">
+        <label className="text-sm font-medium mb-2">Enrollment Number</label>
+        <input
+          type="text"
+          name="enrollmentNumber"
+          value={formData.enrollmentNumber}
+          onChange={handleChange}
+          className="p-3 border border-gray-300 rounded-md"
+          required
+        />
+      </div>
+
+      {/* Reference Number */}
+      <div className="flex flex-col">
+        <label className="text-sm font-medium mb-2">Reference Number</label>
+        <input
+          type="text"
+          name="referenceNumber"
+          value={formData.referenceNumber}
+          onChange={handleChange}
+          className="p-3 border border-gray-300 rounded-md"
+          required
+        />
+      </div>
+
+      {/* Email */}
+      <div className="flex flex-col">
+        <label className="text-sm font-medium mb-2">Email</label>
+        <input
+          type="email"
+          name="emailId"
+          value={formData.emailId}
+          onChange={handleChange}
+          className="p-3 border border-gray-300 rounded-md"
+          required
+        />
+      </div>
+
+      {/* Balance */}
+      <div className="flex flex-col">
+        <label className="text-sm font-medium mb-2">Balance</label>
+        <input
+          type="number"
+          name="balance"
+          value={formData.balance}
+          onChange={handleChange}
+          className="p-3 border border-gray-300 rounded-md"
+          required
+        />
+      </div>
+
+      {/* Address */}
+      <div className="flex flex-col">
+        <label className="text-sm font-medium mb-2">Address</label>
+        <textarea
+          name="address"
+          value={formData.address}
+          onChange={handleChange}
+          className="p-3 border border-gray-300 rounded-md"
+          rows="4"
+          required
+        />
+      </div>
+
+      {/* Stream Dropdown */}
+      <div className="flex flex-col">
+        <label className="text-sm font-medium mb-2">Stream</label>
+        <select
+          name="stream"
+          value={formData.stream}
+          onChange={handleChange}
+          className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[["Full Name", "fullname"], ["Class", "class"], ["Mobile Number", "mobileNumber"], ["Enrollment Number", "enrollmentNumber"], ["Reference Number", "referenceNumber"], ["Email", "emailId"], ["Balance", "balance"], ["Address", "address"]].map(([label, name]) => (
-              <div key={name} className="mb-4">
-                <label className="block text-sm font-medium">{label}</label>
-                <input
-                  type={name === "balance" ? "number" : "text"}
-                  name={name}
-                  value={formData[name]}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 text-black border rounded-md"
-                  required
-                />
-              </div>
-            ))}
+          <option value="">Select Stream</option>
+          <option value="Stream-1">Stream-1</option>
+          <option value="Stream-2">Stream-2</option>
+        </select>
+      </div>
 
-            {/* Courses */}
-            <div className="col-span-2 mb-4">
-              <label className="block text-sm font-medium mb-2">Courses</label>
-              {formData.courses.map((course, index) => (
-                <div key={index} className="flex flex-col sm:flex-row gap-2 mb-2">
-                  <input
-                    type="text"
-                    name="courseCode"
-                    placeholder="Course Code"
-                    value={course.courseCode}
-                    onChange={(e) => handleCourseChange(index, e)}
-                    className="w-full sm:w-1/2 px-4 py-2 border rounded-md"
-                  />
-                  <input
-                    type="text"
-                    name="subject"
-                    placeholder="Subject"
-                    value={course.subject}
-                    onChange={(e) => handleCourseChange(index, e)}
-                    className="w-full sm:w-1/2 px-4 py-2 border rounded-md"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveCourse(index)}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={handleAddCourse}
-                className="text-blue-500 hover:text-blue-700"
-              >
-                + Add Course
-              </button>
-            </div>
-          </div>
-
-          <div className="flex justify-end space-x-4">
+      {/* Courses Section */}
+      <div className="space-y-4">
+        <label className="text-sm font-medium mb-2">Courses</label>
+        {formData.courses.map((course, index) => (
+          <div key={index} className="flex flex-col sm:flex-row gap-4">
+            <input
+              type="text"
+              name="courseCode"
+              placeholder="Course Code"
+              value={course.courseCode}
+              onChange={(e) => handleCourseChange(index, e)}
+              className="w-full sm:w-1/2 p-3 border border-gray-300 rounded-md"
+            />
+            <input
+              type="text"
+              name="subject"
+              placeholder="Subject"
+              value={course.subject}
+              onChange={(e) => handleCourseChange(index, e)}
+              className="w-full sm:w-1/2 p-3 border border-gray-300 rounded-md"
+            />
             <button
               type="button"
-              onClick={resetForm}
-              className="bg-gray-300 text-black px-4 py-2 rounded-lg"
+              onClick={() => handleRemoveCourse(index)}
+              className="text-red-500 hover:text-red-700 mt-2 sm:mt-0"
             >
-              Reset
-            </button>
-            <button
-              type="submit"
-              className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600"
-            >
-              {editingStudent ? "Update" : "Add"} Student
+              Remove
             </button>
           </div>
-        </motion.form>
-      )}
-
-      <div className="overflow-x-auto bg-white rounded-lg shadow-lg">
-        <table className="min-w-full table-auto">
-          <thead className="bg-gray-100 text-sm text-gray-500">
-            <tr>
-              <th className="px-6 py-3">Full Name</th>
-              <th className="px-6 py-3">Enrollment No</th>
-              <th className="px-6 py-3">Email</th>
-              <th className="px-6 py-3">Balance</th>
-              <th className="px-6 py-3">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredStudents.map((student) => (
-              <motion.tr
-                key={student._id}
-                whileHover={{ scale: 1.03 }}
-                transition={{ duration: 0.2 }}
-                className="border-b hover:bg-gray-50"
-              >
-                <td className="px-6 py-4 text-sm">{student.fullname}</td>
-                <td className="px-6 py-4 text-sm">{student.enrollmentNumber}</td>
-                <td className="px-6 py-4 text-sm">{student.emailId}</td>
-                <td className="px-6 py-4 text-sm">{student.balance}</td>
-                <td className="px-6 py-4 text-sm flex space-x-2">
-                  <button
-                    onClick={() => handleView(student._id)}
-                    className="text-blue-500 hover:text-blue-700"
-                  >
-                    <EyeIcon className="h-5 w-5" />
-                  </button>
-                  <button
-                    onClick={() => handleEdit(student)}
-                    className="text-yellow-500 hover:text-yellow-700"
-                  >
-                    <PencilSquareIcon className="h-5 w-5" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(student._id)}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    <TrashIcon className="h-5 w-5" />
-                  </button>
-                </td>
-              </motion.tr>
-            ))}
-          </tbody>
-        </table>
+        ))}
+        <button
+          type="button"
+          onClick={handleAddCourse}
+          className="text-blue-500 hover:text-blue-700"
+        >
+          + Add Course
+        </button>
       </div>
+    </div>
+
+    {/* Form Buttons */}
+    <div className="flex flex-col sm:flex-row justify-end gap-4 mt-6">
+      <button
+        type="button"
+        onClick={resetForm}
+        className="bg-gray-300 text-black px-4 py-2 rounded-lg w-full sm:w-auto"
+      >
+        Reset
+      </button>
+      <button
+        type="submit"
+        className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 w-full sm:w-auto"
+      >
+        {editingStudent ? "Update" : "Add"} Student
+      </button>
+    </div>
+  </motion.form>
+)}
+
+<br />
+
+<div className="overflow-x-auto bg-white rounded-lg shadow-lg">
+  <table className="min-w-full table-auto">
+    <thead className="bg-gray-100 text-sm text-gray-500">
+      <tr>
+        <th className="px-4 py-3 text-left">Full Name</th>
+        <th className="px-4 py-3 text-left">Enrollment No</th>
+        <th className="px-4 py-3 text-left">Email</th>
+        <th className="px-4 py-3 text-left">Subjects</th>
+        <th className="px-4 py-3 text-left">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {filteredStudents.map((student) => (
+        <motion.tr
+          key={student._id}
+          whileHover={{ scale: 1.03 }}
+          transition={{ duration: 0.2 }}
+          className="border-b hover:bg-gray-50"
+        >
+          <td className="px-4 py-4 text-sm">{student.fullname}</td>
+          <td className="px-4 py-4 text-sm">{student.enrollmentNumber}</td>
+          <td className="px-4 py-4 text-sm">{student.emailId}</td>
+          <td className="px-4 py-4 text-sm">
+            {/* Display subjects as a comma-separated list */}
+            {student.courses.map((course, index) => (
+              <span key={index}>
+                {course.subject}
+                {index < student.courses.length - 1 && ", "}
+              </span>
+            ))}
+          </td>
+          <td className="px-4 py-4 text-sm flex space-x-2">
+            <button
+              onClick={() => handleView(student._id)}
+              className="text-blue-500 hover:text-blue-700 transition-colors duration-200"
+            >
+              <EyeIcon className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => handleEdit(student)}
+              className="text-yellow-500 hover:text-yellow-700 transition-colors duration-200"
+            >
+              <PencilSquareIcon className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => handleDelete(student._id)}
+              className="text-red-500 hover:text-red-700 transition-colors duration-200"
+            >
+              <TrashIcon className="h-5 w-5" />
+            </button>
+          </td>
+        </motion.tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+
+
     </AdminLayout>
   );
 }

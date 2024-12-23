@@ -9,6 +9,12 @@ const StudentSchema = new mongoose.Schema({
     emailId: { type: String, required: true },
     balance: { type: Number, required: true },
     address: { type: String, required: true },
+    stream: { 
+        type: String, 
+        required: true, 
+        enum: ['Stream-1', 'Stream-2'], // Ensure only these values are allowed
+        description: "Stream-1 is for April students, Stream-2 is for October students"
+    },
     courses: [
         {
             courseCode: { type: String, required: true },

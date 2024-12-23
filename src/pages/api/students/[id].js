@@ -6,17 +6,17 @@ export default async function handler(req, res) {
 
     const { id } = req.query;
 
-    // Check if the ID is provided and valid
+    // Validate if the ID is provided
     if (!id) {
         return res.status(400).json({ message: 'Student ID is required' });
     }
 
     try {
-        // Handling GET request (Get specific student by ID)
+        // Handle GET request (Fetch specific student by ID)
         if (req.method === 'GET') {
             const student = await Student.findById(id);
 
-            // If no student found, return 404 error
+            // Return 404 if student not found
             if (!student) {
                 return res.status(404).json({ message: 'Student not found' });
             }
@@ -24,11 +24,23 @@ export default async function handler(req, res) {
             return res.status(200).json(student);
         }
 
-        // Handling PUT request (Update student)
+        // Handle PUT request (Update specific student)
         else if (req.method === 'PUT') {
-            const updatedStudent = await Student.findByIdAndUpdate(id, req.body, { new: true });
+            const { stream, ...updateData } = req.body;
 
-            // If no student found, return 404 error
+            // Validate the `stream` field if provided
+            if (stream) {
+                const validStreams = ['Stream-1', 'Stream-2'];
+                if (!validStreams.includes(stream)) {
+                    return res.status(400).json({ message: 'Invalid stream. Allowed values are Stream-1 and Stream-2.' });
+                }
+                updateData.stream = stream; // Include validated stream in update data
+            }
+
+            // Update the student record
+            const updatedStudent = await Student.findByIdAndUpdate(id, updateData, { new: true });
+
+            // Return 404 if student not found
             if (!updatedStudent) {
                 return res.status(404).json({ message: 'Student not found' });
             }
@@ -36,11 +48,11 @@ export default async function handler(req, res) {
             return res.status(200).json(updatedStudent);
         }
 
-        // Handling DELETE request (Delete student)
+        // Handle DELETE request (Remove specific student)
         else if (req.method === 'DELETE') {
             const deletedStudent = await Student.findByIdAndDelete(id);
 
-            // If no student found, return 404 error
+            // Return 404 if student not found
             if (!deletedStudent) {
                 return res.status(404).json({ message: 'Student not found' });
             }
@@ -48,12 +60,12 @@ export default async function handler(req, res) {
             return res.status(200).json({ message: 'Student deleted successfully' });
         }
 
-        // Method Not Allowed for other HTTP methods
+        // Method not allowed for unsupported HTTP methods
         else {
             return res.status(405).json({ message: 'Method Not Allowed' });
         }
     } catch (error) {
         console.error('Error:', error);
-        return res.status(500).json({ message: 'Server Error' });
+        return res.status(500).json({ message: 'Server Error', error: error.message });
     }
 }

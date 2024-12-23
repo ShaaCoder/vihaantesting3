@@ -6,7 +6,7 @@ export default async function handler(req, res) {
 
     if (req.method === 'GET') {
         try {
-            const { fullname, enrollmentNumber } = req.query;
+            const { fullname, enrollmentNumber, stream } = req.query;
 
             // Build the query object
             const query = {};
@@ -15,6 +15,9 @@ export default async function handler(req, res) {
             }
             if (enrollmentNumber) {
                 query.enrollmentNumber = enrollmentNumber;
+            }
+            if (stream) {
+                query.stream = stream; // Filter by stream
             }
 
             // Fetch students based on query
@@ -28,11 +31,28 @@ export default async function handler(req, res) {
         }
     } else if (req.method === 'POST') {
         try {
-            const { fullname, class: studentClass, mobileNumber, enrollmentNumber, referenceNumber, emailId, balance, address, courses } = req.body;
+            const { 
+                fullname, 
+                class: studentClass, 
+                mobileNumber, 
+                enrollmentNumber, 
+                referenceNumber, 
+                emailId, 
+                balance, 
+                address, 
+                courses, 
+                stream 
+            } = req.body;
 
             // Basic validation for required fields
-            if (!fullname || !studentClass || !mobileNumber || !enrollmentNumber || !emailId || !balance || !address || !courses || !Array.isArray(courses) || courses.length === 0) {
+            if (!fullname || !studentClass || !mobileNumber || !enrollmentNumber || !emailId || !balance || !address || !stream || !courses || !Array.isArray(courses) || courses.length === 0) {
                 return res.status(400).json({ message: 'All fields are required, and courses must be a non-empty array' });
+            }
+
+            // Validate the stream field
+            const validStreams = ['Stream-1', 'Stream-2'];
+            if (!validStreams.includes(stream)) {
+                return res.status(400).json({ message: 'Invalid stream. Allowed values are Stream-1 and Stream-2.' });
             }
 
             // Validate each course object
@@ -55,6 +75,7 @@ export default async function handler(req, res) {
                 emailId,
                 balance,
                 address,
+                stream, // Save the stream field
                 courses // Save the courses as an array of objects
             });
 
