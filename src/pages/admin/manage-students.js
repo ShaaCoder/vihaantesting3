@@ -6,6 +6,11 @@ import {
   TrashIcon,
   EyeIcon,
 } from "@heroicons/react/24/solid"; // Corrected import for Heroicons v2
+import {
+  PencilSquareIcon,
+  TrashIcon,
+  EyeIcon,
+} from "@heroicons/react/24/solid"; // Corrected import for Heroicons v2
 import AdminLayout from "@/components/AdminLayout";
 
 export default function Students() {
@@ -31,6 +36,7 @@ export default function Students() {
   const [dropdownOpen, setDropdownOpen] = useState(null); // Track which dropdown is open
   const router = useRouter();
 
+
   // Handle course changes
   const handleCourseChange = (index, e) => {
     const { name, value } = e.target;
@@ -38,8 +44,12 @@ export default function Students() {
     updatedCourses[index] = {
       ...updatedCourses[index],
       [name]: value,
+      ...updatedCourses[index],
+      [name]: value,
     };
     setFormData((prevState) => ({
+      ...prevState,
+      courses: updatedCourses,
       ...prevState,
       courses: updatedCourses,
     }));
@@ -49,12 +59,16 @@ export default function Students() {
     setFormData((prevState) => ({
       ...prevState,
       courses: [...prevState.courses, { courseCode: "", subject: "" }],
+      ...prevState,
+      courses: [...prevState.courses, { courseCode: "", subject: "" }],
     }));
   };
 
   const handleRemoveCourse = (index) => {
     const updatedCourses = formData.courses.filter((_, i) => i !== index);
     setFormData((prevState) => ({
+      ...prevState,
+      courses: updatedCourses,
       ...prevState,
       courses: updatedCourses,
     }));
@@ -207,6 +221,7 @@ export default function Students() {
   const handleView = (id) => {
     router.push(`/admin/students/${id}`);
   };
+  };
 
   // Toggle dropdown visibility for actions
   const toggleDropdown = (id) => {
@@ -230,9 +245,13 @@ export default function Students() {
     setEditingStudent(null);
     setShowForm(false);
   };
+  };
 
   return (
     <AdminLayout>
+      <h1 className="text-3xl font-semibold text-blue-600 mb-6">
+        Manage Students
+      </h1>
       <h1 className="text-3xl font-semibold text-blue-600 mb-6">
         Manage Students
       </h1>
@@ -465,6 +484,64 @@ export default function Students() {
 )}
 
 <br />
+
+<div className="overflow-x-auto bg-white rounded-lg shadow-lg">
+  <table className="min-w-full table-auto">
+    <thead className="bg-gray-100 text-sm text-gray-500">
+      <tr>
+        <th className="px-4 py-3 text-left">Full Name</th>
+        <th className="px-4 py-3 text-left">Enrollment No</th>
+        <th className="px-4 py-3 text-left">Email</th>
+        <th className="px-4 py-3 text-left">Subjects</th>
+        <th className="px-4 py-3 text-left">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {filteredStudents.map((student) => (
+        <motion.tr
+          key={student._id}
+          whileHover={{ scale: 1.03 }}
+          transition={{ duration: 0.2 }}
+          className="border-b hover:bg-gray-50"
+        >
+          <td className="px-4 py-4 text-sm">{student.fullname}</td>
+          <td className="px-4 py-4 text-sm">{student.enrollmentNumber}</td>
+          <td className="px-4 py-4 text-sm">{student.emailId}</td>
+          <td className="px-4 py-4 text-sm">
+            {/* Display subjects as a comma-separated list */}
+            {student.courses.map((course, index) => (
+              <span key={index}>
+                {course.subject}
+                {index < student.courses.length - 1 && ", "}
+              </span>
+            ))}
+          </td>
+          <td className="px-4 py-4 text-sm flex space-x-2">
+            <button
+              onClick={() => handleView(student._id)}
+              className="text-blue-500 hover:text-blue-700 transition-colors duration-200"
+            >
+              <EyeIcon className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => handleEdit(student)}
+              className="text-yellow-500 hover:text-yellow-700 transition-colors duration-200"
+            >
+              <PencilSquareIcon className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => handleDelete(student._id)}
+              className="text-red-500 hover:text-red-700 transition-colors duration-200"
+            >
+              <TrashIcon className="h-5 w-5" />
+            </button>
+          </td>
+        </motion.tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+
 
 <div className="overflow-x-auto bg-white rounded-lg shadow-lg">
   <table className="min-w-full table-auto">
