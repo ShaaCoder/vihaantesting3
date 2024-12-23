@@ -245,7 +245,7 @@ export default function Students() {
     setEditingStudent(null);
     setShowForm(false);
   };
-  };
+  
 
   return (
     <AdminLayout>
