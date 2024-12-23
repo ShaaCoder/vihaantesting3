@@ -357,7 +357,7 @@ export default function Students() {
       </div>
 
       {/* Reference Number */}
-      <div className="flex flex-col">
+      <div className="flex flex-col ">
         <label className="text-sm font-medium mb-2">Reference Number</label>
         <input
           type="text"
